@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TestWise Simulator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
+    .slider-container {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    input[type=range] {
+      width: 100%;
+    }
+    .metrics {
+      margin-top: 20px;
+    }
+    .metric {
+      margin-bottom: 10px;
+    }
+    details summary {
+      cursor: pointer;
+      font-weight: bold;
+      color: #333;
+    }
+    .chart-container {
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>TestWise Simulator</h1>
+    <p>Adjust the sliders below to simulate the testing process and view the corresponding metrics.</p>
+
+    <!-- Sensitivity Slider -->
+    <div class="slider-container">
+      <label for="sensitivity">Sensitivity: <span id="sensitivityValue">0.90</span></label>
+      <input type="range" id="sensitivity" min="0" max="1" step="0.01" value="0.90">
+    </div>
+
+    <!-- Specificity Slider -->
+    <div class="slider-container">
+      <label for="specificity">Specificity: <span id="specificityValue">0.90</span></label>
+      <input type="range" id="specificity" min="0" max="1" step="0.01" value="0.90">
+    </div>
+
+    <!-- Prevalence Slider -->
+    <div class="slider-container">
+      <label for="prevalence">Prevalence: <span id="prevalenceValue">0.10</span></label>
+      <input type="range" id="prevalence" min="0" max="1" step="0.01" value="0.10">
+    </div>
+
+    <!-- Population Size Input -->
+    <div class="slider-container">
+      <label for="population">Population Size: <span id="populationValue">1000</span></label>
+      <input type="number" id="population" value="1000" min="1">
+    </div>
+
+    <!-- Composite Accuracy -->
+    <div>
+      <strong>Composite Accuracy: </strong><span id="accuracyValue">--</span>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-container">
+      <canvas id="myChart"></canvas>
+    </div>
+
+    <!-- Metrics with expandable explanations -->
+    <div class="metrics">
+      <div class="metric">
+        <details>
+          <summary>NPV (Negative Predictive Value): <span id="npvValue">--</span></summary>
+          <p>
+            NPV = (True Negatives) / (True Negatives + False Negatives). A high NPV indicates that a negative result is a good indicator of the absence of the disease.
+          </p>
+        </details>
+      </div>
+      <div class="metric">
+        <details>
+          <summary>PPV (Positive Predictive Value): <span id="ppvValue">--</span></summary>
+          <p>
+            PPV = (True Positives) / (True Positives + False Positives). A high PPV means that a positive result is a reliable indicator of disease presence.
+          </p>
+        </details>
+      </div>
+      <div class="metric">
+        <details>
+          <summary>Sensitivity (True Positive Rate): <span id="sensValue">--</span></summary>
+          <p>
+            Sensitivity = (True Positives) / (True Positives + False Negatives). A high sensitivity means the test effectively identifies those with the disease.
+          </p>
+        </details>
+      </div>
+      <div class="metric">
+        <details>
+          <summary>Specificity (True Negative Rate): <span id="specValue">--</span></summary>
+          <p>
+            Specificity = (True Negatives) / (True Negatives + False Positives). A high specificity indicates the test accurately identifies those without the disease.
+          </p>
+        </details>
+      </div>
+      <div class="metric">
+        <details>
+          <summary>False Positive Rate: <span id="fprValue">--</span></summary>
+          <p>
+            False Positive Rate = 1 - Specificity. Lower values indicate fewer healthy individuals are mistakenly identified as having the disease.
+          </p>
+        </details>
+      </div>
+      <div class="metric">
+        <details>
+          <summary>False Negative Rate: <span id="fnrValue">--</span></summary>
+          <p>
+            False Negative Rate = 1 - Sensitivity. Lower values indicate fewer cases of disease are missed.
+          </p>
+        </details>
+      </div>
+      <div class="metric">
+        <details>
+          <summary>F1 Score: <span id="f1Value">--</span></summary>
+          <p>
+            F1 Score = 2 * (Precision * Recall) / (Precision + Recall), balancing PPV and Sensitivity.
+          </p>
+        </details>
+      </div>
+      <div class="metric">
+        <details>
+          <summary>Matthews Correlation Coefficient (MCC): <span id="mccValue">--</span></summary>
+          <p>
+            MCC = (TP * TN - FP * FN) / √((TP + FP) * (TP + FN) * (TN + FP) * (TN + FN)). Values range from -1 to 1, with 1 indicating perfect prediction.
+          </p>
+        </details>
+      </div>
+      <div class="metric">
+        <details>
+          <summary>Balanced Accuracy: <span id="balAccValue">--</span></summary>
+          <p>
+            Balanced Accuracy = (Sensitivity + Specificity) / 2. It provides a balanced view of performance, especially in imbalanced datasets.
+          </p>
+        </details>
+      </div>
+      <div class="metric">
+        <details>
+          <summary>False Discovery Rate (FDR): <span id="fdrValue">--</span></summary>
+          <p>
+            FDR = (False Positives) / (True Positives + False Positives). Lower values indicate fewer false positives among positive results.
+          </p>
+        </details>
+      </div>
+      <div class="metric">
+        <details>
+          <summary>AUC (Approximation): <span id="aucValue">--</span></summary>
+          <p>
+            AUC is approximated as (Sensitivity + Specificity) / 2. A higher AUC indicates better overall test performance.
+          </p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Get DOM elements
+    const sensitivitySlider = document.getElementById('sensitivity');
+    const specificitySlider = document.getElementById('specificity');
+    const prevalenceSlider = document.getElementById('prevalence');
+    const populationInput = document.getElementById('population');
+
+    const sensitivityValueLabel = document.getElementById('sensitivityValue');
+    const specificityValueLabel = document.getElementById('specificityValue');
+    const prevalenceValueLabel = document.getElementById('prevalenceValue');
+    const populationValueLabel = document.getElementById('populationValue');
+    const accuracyValueLabel = document.getElementById('accuracyValue');
+
+    const npvValueLabel = document.getElementById('npvValue');
+    const ppvValueLabel = document.getElementById('ppvValue');
+    const sensValueLabel = document.getElementById('sensValue');
+    const specValueLabel = document.getElementById('specValue');
+    const fprValueLabel = document.getElementById('fprValue');
+    const fnrValueLabel = document.getElementById('fnrValue');
+    const f1ValueLabel = document.getElementById('f1Value');
+    const mccValueLabel = document.getElementById('mccValue');
+    const balAccValueLabel = document.getElementById('balAccValue');
+    const fdrValueLabel = document.getElementById('fdrValue');
+    const aucValueLabel = document.getElementById('aucValue');
+
+    // Set up Chart.js
+    const ctx = document.getElementById('myChart').getContext('2d');
+    let chart;
+
+    function updateChart(tp, fp, tn, fn) {
+      const data = {
+        labels: ['True Positives', 'False Positives', 'True Negatives', 'False Negatives'],
+        datasets: [{
+          label: 'Count',
+          data: [tp, fp, tn, fn],
+          backgroundColor: [
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(255, 206, 86, 0.6)'
+          ]
+        }]
+      };
+      if (chart) {
+        chart.data.datasets[0].data = [tp, fp, tn, fn];
+        chart.update();
+      } else {
+        chart = new Chart(ctx, {
+          type: 'bar',
+          data: data,
+          options: {
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { stepSize: 1 }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // Calculation functions
+    function calculateValues() {
+      const sensitivity = parseFloat(sensitivitySlider.value);
+      const specificity = parseFloat(specificitySlider.value);
+      const prevalence = parseFloat(prevalenceSlider.value);
+      const populationSize = parseInt(populationInput.value);
+
+      sensitivityValueLabel.textContent = sensitivity.toFixed(2);
+      specificityValueLabel.textContent = specificity.toFixed(2);
+      prevalenceValueLabel.textContent = prevalence.toFixed(2);
+      populationValueLabel.textContent = populationSize;
+
+      // Confusion matrix components
+      const tp = prevalence * sensitivity * populationSize;
+      const fn = prevalence * (1 - sensitivity) * populationSize;
+      const tn = (1 - prevalence) * specificity * populationSize;
+      const fp = (1 - prevalence) * (1 - specificity) * populationSize;
+
+      // Composite Accuracy
+      const accuracy = (tp + tn) / populationSize;
+      accuracyValueLabel.textContent = accuracy.toFixed(2);
+
+      // PPV and NPV
+      const ppv = tp / (tp + fp);
+      const npv = tn / (tn + fn);
+      ppvValueLabel.textContent = isNaN(ppv) ? '--' : ppv.toFixed(2);
+      npvValueLabel.textContent = isNaN(npv) ? '--' : npv.toFixed(2);
+
+      // F1 Score
+      const precision = ppv;
+      const recall = sensitivity;
+      let f1 = 0;
+      if (precision + recall > 0) {
+        f1 = 2 * (precision * recall) / (precision + recall);
+      }
+      f1ValueLabel.textContent = f1.toFixed(2);
+
+      // Matthews Correlation Coefficient (MCC)
+      const numerator = (tp * tn) - (fp * fn);
+      const denominator = Math.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn));
+      const mcc = denominator === 0 ? 0 : numerator / denominator;
+      mccValueLabel.textContent = isNaN(mcc) ? '--' : mcc.toFixed(2);
+
+      // Balanced Accuracy
+      const balAcc = (sensitivity + specificity) / 2;
+      balAccValueLabel.textContent = balAcc.toFixed(2);
+
+      // False Positive Rate and False Negative Rate
+      const fpr = 1 - specificity;
+      const fnr = 1 - sensitivity;
+      fprValueLabel.textContent = fpr.toFixed(2);
+      fnrValueLabel.textContent = fnr.toFixed(2);
+
+      // False Discovery Rate (FDR)
+      const fdr = fp / (tp + fp);
+      fdrValueLabel.textContent = isNaN(fdr) ? '--' : fdr.toFixed(2);
+
+      // AUC approximation
+      const auc = (sensitivity + specificity) / 2;
+      aucValueLabel.textContent = auc.toFixed(2);
+
+      updateChart(tp, fp, tn, fn);
+    }
+
+    // Event listeners
+    sensitivitySlider.addEventListener('input', calculateValues);
+    specificitySlider.addEventListener('input', calculateValues);
+    prevalenceSlider.addEventListener('input', calculateValues);
+    populationInput.addEventListener('input', calculateValues);
+
+    // Initial calculation
+    calculateValues();
+  </script>
+</body>
+</html>
