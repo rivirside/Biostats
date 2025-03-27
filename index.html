@@ -2,204 +2,244 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="description" content="TestWise Simulator: A clean, interactive tool to explore diagnostic testing metrics.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TestWise Simulator</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* CSS Variables for light/dark mode */
+    :root {
+      --bg-color: #f8f9fa;
+      --text-color: #333;
+      --accent-color: #007bff;
+      --card-bg: #fff;
+      --border-color: #ddd;
+    }
+    body.dark {
+      --bg-color: #181818;
+      --text-color: #f8f9fa;
+      --accent-color: #66b2ff;
+      --card-bg: #242424;
+      --border-color: #555;
+    }
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      padding: 20px;
     }
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
+      padding: 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
     }
-    .slider-container {
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 20px;
     }
-    label {
-      display: block;
-      margin-bottom: 5px;
+    header h1 {
+      margin: 0;
+      font-size: 1.8em;
     }
-    input[type=range] {
-      width: 100%;
-    }
-    .metrics {
-      margin-top: 20px;
-    }
-    .metric {
-      margin-bottom: 10px;
-    }
-    details summary {
+    .toggle-dark {
+      background: var(--accent-color);
+      border: none;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 4px;
       cursor: pointer;
-      font-weight: bold;
-      color: #333;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .control {
+      display: flex;
+      flex-direction: column;
+    }
+    .control label {
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    .control input[type=range],
+    .control input[type=number] {
+      padding: 5px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .summary-item {
+      padding: 10px;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
     }
     .chart-container {
-      margin: 20px 0;
+      margin-bottom: 20px;
+    }
+    .metrics details {
+      background: var(--bg-color);
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .metrics summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent-color);
+    }
+    @media (max-width: 600px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>TestWise Simulator</h1>
-    <p>Adjust the sliders below to simulate the testing process and view the corresponding metrics.</p>
-
-    <!-- Sensitivity Slider -->
-    <div class="slider-container">
-      <label for="sensitivity">Sensitivity: <span id="sensitivityValue">0.90</span></label>
-      <input type="range" id="sensitivity" min="0" max="1" step="0.01" value="0.90">
-    </div>
-
-    <!-- Specificity Slider -->
-    <div class="slider-container">
-      <label for="specificity">Specificity: <span id="specificityValue">0.90</span></label>
-      <input type="range" id="specificity" min="0" max="1" step="0.01" value="0.90">
-    </div>
-
-    <!-- Prevalence Slider -->
-    <div class="slider-container">
-      <label for="prevalence">Prevalence: <span id="prevalenceValue">0.10</span></label>
-      <input type="range" id="prevalence" min="0" max="1" step="0.01" value="0.10">
-    </div>
-
-    <!-- Population Size Input -->
-    <div class="slider-container">
-      <label for="population">Population Size: <span id="populationValue">1000</span></label>
-      <input type="number" id="population" value="1000" min="1">
-    </div>
-
-    <!-- Composite Accuracy -->
-    <div>
-      <strong>Composite Accuracy: </strong><span id="accuracyValue">--</span>
-    </div>
-
+    <header>
+      <h1>TestWise Simulator</h1>
+      <button class="toggle-dark" onclick="document.body.classList.toggle('dark')">Toggle Dark Mode</button>
+    </header>
+    <p>Use the controls below to adjust the test parameters and view the metrics in real time.</p>
+    
+    <!-- Controls -->
+    <section class="controls">
+      <div class="control">
+        <label for="sensitivity">Sensitivity: <span id="sensitivityValue">0.90</span></label>
+        <input type="range" id="sensitivity" min="0" max="1" step="0.01" value="0.90">
+      </div>
+      <div class="control">
+        <label for="specificity">Specificity: <span id="specificityValue">0.90</span></label>
+        <input type="range" id="specificity" min="0" max="1" step="0.01" value="0.90">
+      </div>
+      <div class="control">
+        <label for="prevalence">Prevalence: <span id="prevalenceValue">0.10</span></label>
+        <input type="range" id="prevalence" min="0" max="1" step="0.01" value="0.10">
+      </div>
+      <div class="control">
+        <label for="population">Population Size: <span id="populationValue">1000</span></label>
+        <input type="number" id="population" value="1000" min="1">
+      </div>
+    </section>
+    
+    <!-- Summary Metrics -->
+    <section class="summary">
+      <div class="summary-item">
+        <strong>Accuracy</strong>
+        <div id="accuracyValue">--</div>
+      </div>
+      <div class="summary-item">
+        <strong>PPV</strong>
+        <div id="ppvValue">--</div>
+      </div>
+      <div class="summary-item">
+        <strong>NPV</strong>
+        <div id="npvValue">--</div>
+      </div>
+      <div class="summary-item">
+        <strong>F1 Score</strong>
+        <div id="f1Value">--</div>
+      </div>
+    </section>
+    
     <!-- Chart -->
-    <div class="chart-container">
+    <section class="chart-container">
       <canvas id="myChart"></canvas>
-    </div>
-
-    <!-- Metrics with expandable explanations -->
-    <div class="metrics">
-      <div class="metric">
-        <details>
-          <summary>NPV (Negative Predictive Value): <span id="npvValue">--</span></summary>
-          <p>
-            NPV = (True Negatives) / (True Negatives + False Negatives). A high NPV indicates that a negative result is a good indicator of the absence of the disease.
-          </p>
-        </details>
-      </div>
-      <div class="metric">
-        <details>
-          <summary>PPV (Positive Predictive Value): <span id="ppvValue">--</span></summary>
-          <p>
-            PPV = (True Positives) / (True Positives + False Positives). A high PPV means that a positive result is a reliable indicator of disease presence.
-          </p>
-        </details>
-      </div>
-      <div class="metric">
-        <details>
-          <summary>Sensitivity (True Positive Rate): <span id="sensValue">--</span></summary>
-          <p>
-            Sensitivity = (True Positives) / (True Positives + False Negatives). A high sensitivity means the test effectively identifies those with the disease.
-          </p>
-        </details>
-      </div>
-      <div class="metric">
-        <details>
-          <summary>Specificity (True Negative Rate): <span id="specValue">--</span></summary>
-          <p>
-            Specificity = (True Negatives) / (True Negatives + False Positives). A high specificity indicates the test accurately identifies those without the disease.
-          </p>
-        </details>
-      </div>
-      <div class="metric">
-        <details>
-          <summary>False Positive Rate: <span id="fprValue">--</span></summary>
-          <p>
-            False Positive Rate = 1 - Specificity. Lower values indicate fewer healthy individuals are mistakenly identified as having the disease.
-          </p>
-        </details>
-      </div>
-      <div class="metric">
-        <details>
-          <summary>False Negative Rate: <span id="fnrValue">--</span></summary>
-          <p>
-            False Negative Rate = 1 - Sensitivity. Lower values indicate fewer cases of disease are missed.
-          </p>
-        </details>
-      </div>
-      <div class="metric">
-        <details>
-          <summary>F1 Score: <span id="f1Value">--</span></summary>
-          <p>
-            F1 Score = 2 * (Precision * Recall) / (Precision + Recall), balancing PPV and Sensitivity.
-          </p>
-        </details>
-      </div>
-      <div class="metric">
-        <details>
-          <summary>Matthews Correlation Coefficient (MCC): <span id="mccValue">--</span></summary>
-          <p>
-            MCC = (TP * TN - FP * FN) / √((TP + FP) * (TP + FN) * (TN + FP) * (TN + FN)). Values range from -1 to 1, with 1 indicating perfect prediction.
-          </p>
-        </details>
-      </div>
-      <div class="metric">
-        <details>
-          <summary>Balanced Accuracy: <span id="balAccValue">--</span></summary>
-          <p>
-            Balanced Accuracy = (Sensitivity + Specificity) / 2. It provides a balanced view of performance, especially in imbalanced datasets.
-          </p>
-        </details>
-      </div>
-      <div class="metric">
-        <details>
-          <summary>False Discovery Rate (FDR): <span id="fdrValue">--</span></summary>
-          <p>
-            FDR = (False Positives) / (True Positives + False Positives). Lower values indicate fewer false positives among positive results.
-          </p>
-        </details>
-      </div>
-      <div class="metric">
-        <details>
-          <summary>AUC (Approximation): <span id="aucValue">--</span></summary>
-          <p>
-            AUC is approximated as (Sensitivity + Specificity) / 2. A higher AUC indicates better overall test performance.
-          </p>
-        </details>
-      </div>
-    </div>
+    </section>
+    
+    <!-- Detailed Metrics -->
+    <section class="metrics">
+      <details>
+        <summary>Sensitivity (True Positive Rate): <span id="sensValue">--</span></summary>
+        <p>Sensitivity = (True Positives) / (True Positives + False Negatives). It indicates how effectively the test identifies those with the condition.</p>
+      </details>
+      <details>
+        <summary>Specificity (True Negative Rate): <span id="specValue">--</span></summary>
+        <p>Specificity = (True Negatives) / (True Negatives + False Positives). It measures how effectively the test identifies those without the condition.</p>
+      </details>
+      <details>
+        <summary>False Positive Rate: <span id="fprValue">--</span></summary>
+        <p>False Positive Rate = 1 - Specificity. Lower values indicate fewer false alarms.</p>
+      </details>
+      <details>
+        <summary>False Negative Rate: <span id="fnrValue">--</span></summary>
+        <p>False Negative Rate = 1 - Sensitivity. Lower values indicate fewer missed cases.</p>
+      </details>
+      <details>
+        <summary>Matthews Correlation Coefficient (MCC): <span id="mccValue">--</span></summary>
+        <p>MCC = (TP × TN - FP × FN) / √((TP+FP) (TP+FN) (TN+FP) (TN+FN)). It ranges from -1 to 1, with 1 being a perfect prediction.</p>
+      </details>
+      <details>
+        <summary>Balanced Accuracy: <span id="balAccValue">--</span></summary>
+        <p>Balanced Accuracy = (Sensitivity + Specificity) / 2. It provides a balanced view of performance for imbalanced datasets.</p>
+      </details>
+      <details>
+        <summary>False Discovery Rate (FDR): <span id="fdrValue">--</span></summary>
+        <p>FDR = (False Positives) / (True Positives + False Positives). Lower values indicate better performance.</p>
+      </details>
+      <details>
+        <summary>AUC (Approximation): <span id="aucValue">--</span></summary>
+        <p>AUC is approximated as (Sensitivity + Specificity) / 2. Higher values indicate better overall test performance.</p>
+      </details>
+    </section>
   </div>
-
+  
   <script>
-    // Get DOM elements
-    const sensitivitySlider = document.getElementById('sensitivity');
-    const specificitySlider = document.getElementById('specificity');
-    const prevalenceSlider = document.getElementById('prevalence');
-    const populationInput = document.getElementById('population');
+    'use strict';
+    // Cache DOM elements using objects for cleaner code
+    const sliders = {
+      sensitivity: document.getElementById('sensitivity'),
+      specificity: document.getElementById('specificity'),
+      prevalence: document.getElementById('prevalence'),
+      population: document.getElementById('population')
+    };
 
-    const sensitivityValueLabel = document.getElementById('sensitivityValue');
-    const specificityValueLabel = document.getElementById('specificityValue');
-    const prevalenceValueLabel = document.getElementById('prevalenceValue');
-    const populationValueLabel = document.getElementById('populationValue');
-    const accuracyValueLabel = document.getElementById('accuracyValue');
+    const labels = {
+      sensitivity: document.getElementById('sensitivityValue'),
+      specificity: document.getElementById('specificityValue'),
+      prevalence: document.getElementById('prevalenceValue'),
+      population: document.getElementById('populationValue')
+    };
 
-    const npvValueLabel = document.getElementById('npvValue');
-    const ppvValueLabel = document.getElementById('ppvValue');
-    const sensValueLabel = document.getElementById('sensValue');
-    const specValueLabel = document.getElementById('specValue');
-    const fprValueLabel = document.getElementById('fprValue');
-    const fnrValueLabel = document.getElementById('fnrValue');
-    const f1ValueLabel = document.getElementById('f1Value');
-    const mccValueLabel = document.getElementById('mccValue');
-    const balAccValueLabel = document.getElementById('balAccValue');
-    const fdrValueLabel = document.getElementById('fdrValue');
-    const aucValueLabel = document.getElementById('aucValue');
+    const summaryLabels = {
+      accuracy: document.getElementById('accuracyValue'),
+      ppv: document.getElementById('ppvValue'),
+      npv: document.getElementById('npvValue'),
+      f1: document.getElementById('f1Value')
+    };
 
-    // Set up Chart.js
+    const detailLabels = {
+      sens: document.getElementById('sensValue'),
+      spec: document.getElementById('specValue'),
+      fpr: document.getElementById('fprValue'),
+      fnr: document.getElementById('fnrValue'),
+      mcc: document.getElementById('mccValue'),
+      balAcc: document.getElementById('balAccValue'),
+      fdr: document.getElementById('fdrValue'),
+      auc: document.getElementById('aucValue')
+    };
+
+    // Setup Chart.js
     const ctx = document.getElementById('myChart').getContext('2d');
     let chart;
-
     function updateChart(tp, fp, tn, fn) {
       const data = {
         labels: ['True Positives', 'False Positives', 'True Negatives', 'False Negatives'],
@@ -227,84 +267,85 @@
                 beginAtZero: true,
                 ticks: { stepSize: 1 }
               }
+            },
+            plugins: {
+              legend: { display: false }
             }
           }
         });
       }
     }
 
-    // Calculation functions
-    function calculateValues() {
-      const sensitivity = parseFloat(sensitivitySlider.value);
-      const specificity = parseFloat(specificitySlider.value);
-      const prevalence = parseFloat(prevalenceSlider.value);
-      const populationSize = parseInt(populationInput.value);
-
-      sensitivityValueLabel.textContent = sensitivity.toFixed(2);
-      specificityValueLabel.textContent = specificity.toFixed(2);
-      prevalenceValueLabel.textContent = prevalence.toFixed(2);
-      populationValueLabel.textContent = populationSize;
-
-      // Confusion matrix components
-      const tp = prevalence * sensitivity * populationSize;
-      const fn = prevalence * (1 - sensitivity) * populationSize;
-      const tn = (1 - prevalence) * specificity * populationSize;
-      const fp = (1 - prevalence) * (1 - specificity) * populationSize;
-
-      // Composite Accuracy
-      const accuracy = (tp + tn) / populationSize;
-      accuracyValueLabel.textContent = accuracy.toFixed(2);
-
-      // PPV and NPV
+    // Helper functions for calculations
+    function getInputs() {
+      return {
+        sensitivity: parseFloat(sliders.sensitivity.value),
+        specificity: parseFloat(sliders.specificity.value),
+        prevalence: parseFloat(sliders.prevalence.value),
+        population: Math.max(1, parseInt(sliders.population.value))
+      };
+    }
+    function getConfusionMatrix({ sensitivity, specificity, prevalence, population }) {
+      const tp = prevalence * sensitivity * population;
+      const fn = prevalence * (1 - sensitivity) * population;
+      const tn = (1 - prevalence) * specificity * population;
+      const fp = (1 - prevalence) * (1 - specificity) * population;
+      return { tp, fn, tn, fp };
+    }
+    function updateMetrics() {
+      const { sensitivity, specificity, prevalence, population } = getInputs();
+      const { tp, fn, tn, fp } = getConfusionMatrix({ sensitivity, specificity, prevalence, population });
+      
+      // Update control labels
+      labels.sensitivity.textContent = sensitivity.toFixed(2);
+      labels.specificity.textContent = specificity.toFixed(2);
+      labels.prevalence.textContent = prevalence.toFixed(2);
+      labels.population.textContent = population;
+      
+      // Calculate composite metrics
+      const accuracy = (tp + tn) / population;
       const ppv = tp / (tp + fp);
       const npv = tn / (tn + fn);
-      ppvValueLabel.textContent = isNaN(ppv) ? '--' : ppv.toFixed(2);
-      npvValueLabel.textContent = isNaN(npv) ? '--' : npv.toFixed(2);
-
-      // F1 Score
       const precision = ppv;
       const recall = sensitivity;
-      let f1 = 0;
-      if (precision + recall > 0) {
-        f1 = 2 * (precision * recall) / (precision + recall);
-      }
-      f1ValueLabel.textContent = f1.toFixed(2);
-
-      // Matthews Correlation Coefficient (MCC)
+      const f1 = (precision + recall) ? (2 * (precision * recall) / (precision + recall)) : 0;
+      
+      // Update summary
+      summaryLabels.accuracy.textContent = accuracy.toFixed(2);
+      summaryLabels.ppv.textContent = isNaN(ppv) ? '--' : ppv.toFixed(2);
+      summaryLabels.npv.textContent = isNaN(npv) ? '--' : npv.toFixed(2);
+      summaryLabels.f1.textContent = f1.toFixed(2);
+      
+      // Detailed metrics
+      detailLabels.sens.textContent = sensitivity.toFixed(2);
+      detailLabels.spec.textContent = specificity.toFixed(2);
+      detailLabels.fpr.textContent = (1 - specificity).toFixed(2);
+      detailLabels.fnr.textContent = (1 - sensitivity).toFixed(2);
+      
       const numerator = (tp * tn) - (fp * fn);
       const denominator = Math.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn));
-      const mcc = denominator === 0 ? 0 : numerator / denominator;
-      mccValueLabel.textContent = isNaN(mcc) ? '--' : mcc.toFixed(2);
-
-      // Balanced Accuracy
+      const mcc = denominator ? numerator / denominator : 0;
+      detailLabels.mcc.textContent = isNaN(mcc) ? '--' : mcc.toFixed(2);
+      
       const balAcc = (sensitivity + specificity) / 2;
-      balAccValueLabel.textContent = balAcc.toFixed(2);
-
-      // False Positive Rate and False Negative Rate
-      const fpr = 1 - specificity;
-      const fnr = 1 - sensitivity;
-      fprValueLabel.textContent = fpr.toFixed(2);
-      fnrValueLabel.textContent = fnr.toFixed(2);
-
-      // False Discovery Rate (FDR)
+      detailLabels.balAcc.textContent = balAcc.toFixed(2);
+      
       const fdr = fp / (tp + fp);
-      fdrValueLabel.textContent = isNaN(fdr) ? '--' : fdr.toFixed(2);
-
-      // AUC approximation
+      detailLabels.fdr.textContent = isNaN(fdr) ? '--' : fdr.toFixed(2);
+      
       const auc = (sensitivity + specificity) / 2;
-      aucValueLabel.textContent = auc.toFixed(2);
-
+      detailLabels.auc.textContent = auc.toFixed(2);
+      
       updateChart(tp, fp, tn, fn);
     }
-
-    // Event listeners
-    sensitivitySlider.addEventListener('input', calculateValues);
-    specificitySlider.addEventListener('input', calculateValues);
-    prevalenceSlider.addEventListener('input', calculateValues);
-    populationInput.addEventListener('input', calculateValues);
-
-    // Initial calculation
-    calculateValues();
+    
+    // Add event listeners for all controls
+    Object.values(sliders).forEach(input => {
+      input.addEventListener('input', updateMetrics);
+    });
+    
+    // Initialize metrics on page load
+    updateMetrics();
   </script>
 </body>
 </html>
