@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="description" content="TestWise Simulator: A clean, interactive tool to explore diagnostic testing metrics!">
+  <meta name="description" content="TestWise Simulator: An interactive tool to explore diagnostic testing metrics and test your knowledge with an integrated quiz.">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TestWise Simulator</title>
+  <title>TestWise Simulator & Quiz</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     /* CSS Variables for light/dark mode */
@@ -41,13 +41,26 @@
     }
     header {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
+      gap: 10px;
       margin-bottom: 20px;
     }
     header h1 {
       margin: 0;
       font-size: 1.8em;
+    }
+    nav {
+      display: flex;
+      gap: 10px;
+    }
+    nav button {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background: var(--accent-color);
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
     }
     .toggle-dark {
       background: var(--accent-color);
@@ -56,6 +69,11 @@
       padding: 8px 12px;
       border-radius: 4px;
       cursor: pointer;
+      align-self: flex-end;
+    }
+    /* Sections for Simulator and Quiz */
+    section {
+      margin-bottom: 30px;
     }
     .controls {
       display: grid;
@@ -105,6 +123,44 @@
       font-weight: 600;
       color: var(--accent-color);
     }
+    /* Quiz Section Styles */
+    #quiz {
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--bg-color);
+    }
+    #quiz h2 {
+      margin-top: 0;
+    }
+    #quiz-container p,
+    #quiz-container ul {
+      margin: 10px 0;
+    }
+    #quiz-container ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    #quiz-container ul li {
+      background: var(--card-bg);
+      margin: 5px 0;
+      padding: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #quiz-container ul li:hover {
+      background: var(--accent-color);
+      color: #fff;
+    }
+    #quiz button {
+      padding: 8px 12px;
+      border: none;
+      background: var(--accent-color);
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+    }
     @media (max-width: 600px) {
       .controls {
         grid-template-columns: 1fr;
@@ -115,96 +171,138 @@
 <body>
   <div class="container">
     <header>
-      <h1>TestWise Simulator</h1>
+      <h1>TestWise Simulator & Quiz</h1>
+      <nav>
+        <button id="nav-simulator">Simulator</button>
+        <button id="nav-quiz">Quiz</button>
+      </nav>
       <button class="toggle-dark" onclick="document.body.classList.toggle('dark')">Toggle Dark Mode</button>
     </header>
-    <p>Use the controls below to adjust the test parameters and view the metrics in real time.</p>
-    
-    <!-- Controls -->
-    <section class="controls">
-      <div class="control">
-        <label for="sensitivity">Sensitivity: <span id="sensitivityValue">0.90</span></label>
-        <input type="range" id="sensitivity" min="0" max="1" step="0.01" value="0.90">
+
+    <!-- Simulator Section -->
+    <section id="simulatorSection">
+      <p>Use the controls below to adjust the test parameters and view the metrics in real time.</p>
+      
+      <!-- Controls -->
+      <div class="controls">
+        <div class="control">
+          <label for="sensitivity">Sensitivity: <span id="sensitivityValue">0.90</span></label>
+          <input type="range" id="sensitivity" min="0" max="1" step="0.01" value="0.90">
+        </div>
+        <div class="control">
+          <label for="specificity">Specificity: <span id="specificityValue">0.90</span></label>
+          <input type="range" id="specificity" min="0" max="1" step="0.01" value="0.90">
+        </div>
+        <div class="control">
+          <label for="prevalence">Prevalence: <span id="prevalenceValue">0.10</span></label>
+          <input type="range" id="prevalence" min="0" max="1" step="0.01" value="0.10">
+        </div>
+        <div class="control">
+          <label for="population">Population Size: <span id="populationValue">1000</span></label>
+          <input type="number" id="population" value="1000" min="1">
+        </div>
       </div>
-      <div class="control">
-        <label for="specificity">Specificity: <span id="specificityValue">0.90</span></label>
-        <input type="range" id="specificity" min="0" max="1" step="0.01" value="0.90">
+      
+      <!-- Summary Metrics -->
+      <div class="summary">
+        <div class="summary-item">
+          <strong>Accuracy</strong>
+          <div id="accuracyValue">--</div>
+        </div>
+        <div class="summary-item">
+          <strong>PPV</strong>
+          <div id="ppvValue">--</div>
+        </div>
+        <div class="summary-item">
+          <strong>NPV</strong>
+          <div id="npvValue">--</div>
+        </div>
+        <div class="summary-item">
+          <strong>F1 Score</strong>
+          <div id="f1Value">--</div>
+        </div>
       </div>
-      <div class="control">
-        <label for="prevalence">Prevalence: <span id="prevalenceValue">0.10</span></label>
-        <input type="range" id="prevalence" min="0" max="1" step="0.01" value="0.10">
+      
+      <!-- Chart -->
+      <div class="chart-container">
+        <canvas id="myChart"></canvas>
       </div>
-      <div class="control">
-        <label for="population">Population Size: <span id="populationValue">1000</span></label>
-        <input type="number" id="population" value="1000" min="1">
+      
+      <!-- Detailed Metrics -->
+      <div class="metrics">
+        <details>
+          <summary>Sensitivity (True Positive Rate): <span id="sensValue">--</span></summary>
+          <p>Sensitivity = (True Positives) / (True Positives + False Negatives). It indicates how effectively the test identifies those with the condition.</p>
+        </details>
+        <details>
+          <summary>Specificity (True Negative Rate): <span id="specValue">--</span></summary>
+          <p>Specificity = (True Negatives) / (True Negatives + False Positives). It measures how effectively the test identifies those without the condition.</p>
+        </details>
+        <details>
+          <summary>False Positive Rate: <span id="fprValue">--</span></summary>
+          <p>False Positive Rate = 1 - Specificity. Lower values indicate fewer false alarms.</p>
+        </details>
+        <details>
+          <summary>False Negative Rate: <span id="fnrValue">--</span></summary>
+          <p>False Negative Rate = 1 - Sensitivity. Lower values indicate fewer missed cases.</p>
+        </details>
+        <details>
+          <summary>Matthews Correlation Coefficient (MCC): <span id="mccValue">--</span></summary>
+          <p>MCC = (TP × TN - FP × FN) / √((TP+FP)(TP+FN)(TN+FP)(TN+FN)). It ranges from -1 to 1, with 1 being a perfect prediction.</p>
+        </details>
+        <details>
+          <summary>Balanced Accuracy: <span id="balAccValue">--</span></summary>
+          <p>Balanced Accuracy = (Sensitivity + Specificity) / 2. It provides a balanced view of performance for imbalanced datasets.</p>
+        </details>
+        <details>
+          <summary>False Discovery Rate (FDR): <span id="fdrValue">--</span></summary>
+          <p>FDR = (False Positives) / (True Positives + False Positives). Lower values indicate better performance.</p>
+        </details>
+        <details>
+          <summary>AUC (Approximation): <span id="aucValue">--</span></summary>
+          <p>AUC is approximated as (Sensitivity + Specificity) / 2. Higher values indicate better overall test performance.</p>
+        </details>
       </div>
     </section>
-    
-    <!-- Summary Metrics -->
-    <section class="summary">
-      <div class="summary-item">
-        <strong>Accuracy</strong>
-        <div id="accuracyValue">--</div>
+
+    <!-- Quiz Section -->
+    <section id="quizSection" style="display:none;">
+      <h2>Quiz: Test Your Knowledge</h2>
+      <div id="quiz" >
+        <div id="quiz-container">
+          <p id="quiz-question"></p>
+          <ul id="quiz-options"></ul>
+          <button id="next-question" style="display:none;">Next Question</button>
+          <p id="quiz-feedback"></p>
+        </div>
+        <div id="quiz-results" style="display:none;">
+          <h3>Your Score: <span id="score"></span> / <span id="total"></span></h3>
+          <button id="restart-quiz">Restart Quiz</button>
+        </div>
       </div>
-      <div class="summary-item">
-        <strong>PPV</strong>
-        <div id="ppvValue">--</div>
-      </div>
-      <div class="summary-item">
-        <strong>NPV</strong>
-        <div id="npvValue">--</div>
-      </div>
-      <div class="summary-item">
-        <strong>F1 Score</strong>
-        <div id="f1Value">--</div>
-      </div>
-    </section>
-    
-    <!-- Chart -->
-    <section class="chart-container">
-      <canvas id="myChart"></canvas>
-    </section>
-    
-    <!-- Detailed Metrics -->
-    <section class="metrics">
-      <details>
-        <summary>Sensitivity (True Positive Rate): <span id="sensValue">--</span></summary>
-        <p>Sensitivity = (True Positives) / (True Positives + False Negatives). It indicates how effectively the test identifies those with the condition.</p>
-      </details>
-      <details>
-        <summary>Specificity (True Negative Rate): <span id="specValue">--</span></summary>
-        <p>Specificity = (True Negatives) / (True Negatives + False Positives). It measures how effectively the test identifies those without the condition.</p>
-      </details>
-      <details>
-        <summary>False Positive Rate: <span id="fprValue">--</span></summary>
-        <p>False Positive Rate = 1 - Specificity. Lower values indicate fewer false alarms.</p>
-      </details>
-      <details>
-        <summary>False Negative Rate: <span id="fnrValue">--</span></summary>
-        <p>False Negative Rate = 1 - Sensitivity. Lower values indicate fewer missed cases.</p>
-      </details>
-      <details>
-        <summary>Matthews Correlation Coefficient (MCC): <span id="mccValue">--</span></summary>
-        <p>MCC = (TP × TN - FP × FN) / √((TP+FP) (TP+FN) (TN+FP) (TN+FN)). It ranges from -1 to 1, with 1 being a perfect prediction.</p>
-      </details>
-      <details>
-        <summary>Balanced Accuracy: <span id="balAccValue">--</span></summary>
-        <p>Balanced Accuracy = (Sensitivity + Specificity) / 2. It provides a balanced view of performance for imbalanced datasets.</p>
-      </details>
-      <details>
-        <summary>False Discovery Rate (FDR): <span id="fdrValue">--</span></summary>
-        <p>FDR = (False Positives) / (True Positives + False Positives). Lower values indicate better performance.</p>
-      </details>
-      <details>
-        <summary>AUC (Approximation): <span id="aucValue">--</span></summary>
-        <p>AUC is approximated as (Sensitivity + Specificity) / 2. Higher values indicate better overall test performance.</p>
-      </details>
     </section>
   </div>
-  
+
   <script>
     'use strict';
-    // Cache DOM elements using objects for cleaner code
+
+    /**************** Navigation for Sections ****************/
+    const navSimulator = document.getElementById('nav-simulator');
+    const navQuiz = document.getElementById('nav-quiz');
+    const simulatorSection = document.getElementById('simulatorSection');
+    const quizSection = document.getElementById('quizSection');
+
+    navSimulator.addEventListener('click', () => {
+      simulatorSection.style.display = 'block';
+      quizSection.style.display = 'none';
+    });
+    navQuiz.addEventListener('click', () => {
+      simulatorSection.style.display = 'none';
+      quizSection.style.display = 'block';
+    });
+
+    /**************** Simulator Code ****************/
+    // Cache DOM elements for simulator using objects for cleaner code
     const sliders = {
       sensitivity: document.getElementById('sensitivity'),
       specificity: document.getElementById('specificity'),
@@ -268,15 +366,13 @@
                 ticks: { stepSize: 1 }
               }
             },
-            plugins: {
-              legend: { display: false }
-            }
+            plugins: { legend: { display: false } }
           }
         });
       }
     }
 
-    // Helper functions for calculations
+    // Helper functions for simulator calculations
     function getInputs() {
       return {
         sensitivity: parseFloat(sliders.sensitivity.value),
@@ -310,42 +406,143 @@
       const recall = sensitivity;
       const f1 = (precision + recall) ? (2 * (precision * recall) / (precision + recall)) : 0;
       
-      // Update summary
+      // Update summary metrics
       summaryLabels.accuracy.textContent = accuracy.toFixed(2);
       summaryLabels.ppv.textContent = isNaN(ppv) ? '--' : ppv.toFixed(2);
       summaryLabels.npv.textContent = isNaN(npv) ? '--' : npv.toFixed(2);
       summaryLabels.f1.textContent = f1.toFixed(2);
       
-      // Detailed metrics
+      // Update detailed metrics
       detailLabels.sens.textContent = sensitivity.toFixed(2);
       detailLabels.spec.textContent = specificity.toFixed(2);
       detailLabels.fpr.textContent = (1 - specificity).toFixed(2);
       detailLabels.fnr.textContent = (1 - sensitivity).toFixed(2);
-      
       const numerator = (tp * tn) - (fp * fn);
       const denominator = Math.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn));
       const mcc = denominator ? numerator / denominator : 0;
       detailLabels.mcc.textContent = isNaN(mcc) ? '--' : mcc.toFixed(2);
-      
       const balAcc = (sensitivity + specificity) / 2;
       detailLabels.balAcc.textContent = balAcc.toFixed(2);
-      
       const fdr = fp / (tp + fp);
       detailLabels.fdr.textContent = isNaN(fdr) ? '--' : fdr.toFixed(2);
-      
       const auc = (sensitivity + specificity) / 2;
       detailLabels.auc.textContent = auc.toFixed(2);
       
       updateChart(tp, fp, tn, fn);
     }
     
-    // Add event listeners for all controls
+    // Add event listeners for simulator controls
     Object.values(sliders).forEach(input => {
       input.addEventListener('input', updateMetrics);
     });
-    
-    // Initialize metrics on page load
+    // Initialize simulator metrics
     updateMetrics();
+
+    /**************** Quiz Code ****************/
+    // Sample quiz questions array
+    const quizQuestions = [
+      {
+        question: "What does sensitivity measure?",
+        options: [
+          "The probability that a test correctly identifies those with the disease",
+          "The probability that a test correctly identifies those without the disease",
+          "The rate of false positives",
+          "The rate of false negatives"
+        ],
+        answer: "The probability that a test correctly identifies those with the disease",
+        explanation: "Sensitivity is the true positive rate – it measures how well the test identifies the disease."
+      },
+      {
+        question: "What does specificity measure?",
+        options: [
+          "The probability that a test correctly identifies those with the disease",
+          "The probability that a test correctly identifies those without the disease",
+          "The rate of false negatives",
+          "The rate of false positives"
+        ],
+        answer: "The probability that a test correctly identifies those without the disease",
+        explanation: "Specificity is the true negative rate – it measures how well the test identifies healthy individuals."
+      },
+      {
+        question: "Which metric is defined as the harmonic mean of precision and recall?",
+        options: [
+          "Accuracy",
+          "F1 Score",
+          "Balanced Accuracy",
+          "Matthews Correlation Coefficient"
+        ],
+        answer: "F1 Score",
+        explanation: "The F1 Score is the harmonic mean of precision (PPV) and recall (sensitivity)."
+      }
+    ];
+
+    let currentQuestionIndex = 0;
+    let quizScore = 0;
+
+    const questionEl = document.getElementById('quiz-question');
+    const optionsEl = document.getElementById('quiz-options');
+    const nextBtn = document.getElementById('next-question');
+    const feedbackEl = document.getElementById('quiz-feedback');
+    const resultsEl = document.getElementById('quiz-results');
+    const scoreEl = document.getElementById('score');
+    const totalEl = document.getElementById('total');
+    const restartBtn = document.getElementById('restart-quiz');
+
+    function loadQuestion() {
+      feedbackEl.textContent = '';
+      nextBtn.style.display = 'none';
+      const current = quizQuestions[currentQuestionIndex];
+      questionEl.textContent = current.question;
+      optionsEl.innerHTML = '';
+      current.options.forEach(option => {
+        const li = document.createElement('li');
+        li.textContent = option;
+        li.addEventListener('click', () => selectOption(li, option));
+        optionsEl.appendChild(li);
+      });
+    }
+
+    function selectOption(li, selectedOption) {
+      const current = quizQuestions[currentQuestionIndex];
+      // Disable further clicks
+      Array.from(optionsEl.children).forEach(item => item.style.pointerEvents = 'none');
+      if (selectedOption === current.answer) {
+        li.style.backgroundColor = 'lightgreen';
+        feedbackEl.textContent = 'Correct! ' + (current.explanation || '');
+        quizScore++;
+      } else {
+        li.style.backgroundColor = 'salmon';
+        feedbackEl.textContent = 'Incorrect. ' + (current.explanation || '');
+      }
+      nextBtn.style.display = 'block';
+    }
+
+    nextBtn.addEventListener('click', () => {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < quizQuestions.length) {
+        loadQuestion();
+      } else {
+        showResults();
+      }
+    });
+
+    restartBtn.addEventListener('click', () => {
+      currentQuestionIndex = 0;
+      quizScore = 0;
+      resultsEl.style.display = 'none';
+      document.getElementById('quiz-container').style.display = 'block';
+      loadQuestion();
+    });
+
+    function showResults() {
+      document.getElementById('quiz-container').style.display = 'none';
+      resultsEl.style.display = 'block';
+      scoreEl.textContent = quizScore;
+      totalEl.textContent = quizQuestions.length;
+    }
+
+    // Initialize quiz on page load
+    loadQuestion();
   </script>
 </body>
 </html>
